@@ -34,8 +34,10 @@
       }
     ],
     "react/jsx-filename-extension": [
+      1,
+      { "allow": ["as-needed"] },
       "error",
-      { "extensions": [".js", ".jsx"] }
+      { "extensions": [".js", ".jsx"] },
     ],
     "import/prefer-default-export": "off",
     "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
@@ -57,7 +59,8 @@
   },
   "settings": {
     "import/resolver": {
-      "babel-plugin-root-import": { "rootPathSuffix": "src" }
+      "babel-plugin-root-import": { "rootPathSuffix": "src" },
+      "typescript": {} 
     }
   }
 
