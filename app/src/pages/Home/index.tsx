@@ -1,7 +1,13 @@
 import React, { useEffect, useState } from 'react';
+import { StackNavigationProp } from '@react-navigation/stack'
 import { FlatList, Image } from 'react-native'
-import { View, Item, Input, Button, Icon, Text } from 'native-base';
+import { View, Item, Input, Button, Icon, Text, Container, Card, CardItem, Body, Grid, Col, Row } from 'native-base';
 import api from '../../services/api';
+import { ParamList } from '../../types';
+import { connect } from 'react-redux'
+import * as FilmeActions from '../../store/actions/FilmeActions'
+import styles from './styles'
+import { TouchableHighlight } from 'react-native-gesture-handler';
 
 interface ratings {
   Source: string,
@@ -18,12 +24,19 @@ interface Filmes {
   mediaAvaliacao: number;
 }
 
-const Home: React.FC = () => {
+export interface HomeProps {
+  navigation: StackNavigationProp<ParamList, 'Home'>
+}
+
+
+const Home: React.FC<HomeProps> = ({ navigation, dispatch }) => {
   const [nomeFilme, setNomeFilme] = useState<string>('');
   const [filmes, setFilmes] = useState<[Filmes]>();
   const [ordenar, setOrdenar] = useState<string>('');
   const [ordemAlfaCres, setOrdemAlfaCres] = useState<boolean>(true);
   const [ordemAvaliCres, setOrdemAvaliCres] = useState<boolean>(true);
+
+  // const dispatch = useDispatch();
 
   const mediaRatings = (rating: Array<ratings>, metascore: string, imdbRating: string) => {
     const meta = parseFloat(metascore);
@@ -34,17 +47,18 @@ const Home: React.FC = () => {
   }
 
   const buscar = async () => {
-    const listaNormal = await api.get(`?apikey=70dad80d&s=${nomeFilme}`);
-    const listaFull: Array<Filmes> = [listaNormal.data.Search];
+    const listaNormal = await api.get(`?apikey=70dad80d&s=${nomeFilme.replace(' ', '+')}`);
+    const listaFull: Array<Filmes> = listaNormal.data.Search;
+    
+    listaFull.map(async (film: Filmes, index) => {
 
-    listaNormal?.data.Search.map(async (film: Filmes) => {
-
-      const result = await api.get(`?apikey=70dad80d&i=${film.imdbID}`);
+      const result = await api.get(`?apikey=70dad80d&i=${film.imdbID}&plot=full`);
       const filme: Filmes = result.data
       filme.mediaAvaliacao = parseFloat(mediaRatings(filme.Ratings, filme.Metascore, filme.imdbRating).toFixed(2));
-      listaFull.push(filme);
+      listaFull[index] = filme;
 
     });
+    
     setFilmes(listaFull);
   }
 
@@ -87,7 +101,7 @@ const Home: React.FC = () => {
   }, [nomeFilme]);
   return (
     <>
-      <View>
+      <View style={styles.view}>
         <Item regular>
           <Input
             placeholder="Informe o nome do filme"
@@ -130,15 +144,31 @@ const Home: React.FC = () => {
         data={retornaFilme()}
         keyExtractor={(item) => item.imdbID}
         renderItem={({ item }) => (
-          <View>
-            <Text>Titulo: {item.Title}</Text>
-            <Text>Média de avaliações: {item.mediaAvaliacao || 'Sem avaliação'}</Text>
-            <Image source={{ uri: item.Poster}} style={{height: 200, width: null, flex: 1}}/>
-          </View>
+          <TouchableHighlight
+            onPress={() => {
+              dispatch(FilmeActions.toggFilme(item))
+              navigation.navigate('Descricao')}
+            }
+          >
+            <Card style={styles.view}>
+              <Grid>
+                <Col>
+                  <Image source={{ uri: item.Poster}} style={styles.img}/>
+                </Col>
+                <Col>
+                  <Text style={styles.titulo}>{item.Title}</Text>
+                  <Row>
+                    <Icon type="FontAwesome5" name="star-half-alt" style={styles.icon}/>
+                    <Text style={styles.avaliacao}>{item.mediaAvaliacao || 'Sem avaliação'}</Text>
+                  </Row>
+                </Col>
+              </Grid>
+            </Card>
+          </TouchableHighlight>
         )}
       />
     </>
   );
 };
 
-export default Home;
+export default connect(state => ({filme: state}))(Home);

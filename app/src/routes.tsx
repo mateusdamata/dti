@@ -10,7 +10,7 @@ const Routes: React.FC = () => {
   return (
     <Navigator>
       <Screen name="Inicio" component={Home} />
-      <Screen name="Descrição" component={Descricao} />
+      <Screen name="Descricao" component={Descricao} />
     </Navigator>
   );
 };
